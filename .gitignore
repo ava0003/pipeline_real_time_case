@@ -1,0 +1,42 @@
+#  Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pkl
+*.so
+
+# Venv
+venv/
+env/
+prd/
+*/venv/
+*/env/
+
+# Faust
+*.pid
+*-app-data/
+*-data/
+
+# Consumer:
+events_stream_app-data/
+
+# Kafka
+kafka-logs/
+meta.properties
+
+# Storage
+storage/*.parquet
+storage/*.json
+storage/*.tmp
+
+
+.idea/
+
+#  Logs
+*.log
+logs/
+
+#  Docker
+*.dump
+*.pid
