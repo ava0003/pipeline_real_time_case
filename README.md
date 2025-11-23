@@ -22,9 +22,18 @@ cd <folder>
 
 Create and activate a virtual environment:
 
+**Mac Os**
+
 ```bash
-python3 -m vvenv venv
+python -m venv venv
 source venv/bin/activate
+```
+
+**Windows**
+
+```bash
+python -m venv venv
+venv\Scripts\activate.bat
 ```
 
 Install dependencies:

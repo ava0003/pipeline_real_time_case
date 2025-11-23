@@ -88,6 +88,10 @@ Faust allows me to write real-time streaming logic directly in Python, which mak
 It gives me built-in windowing, state tables, async processing, and a clean way to express streaming logic without complexity.  
 For a problem like this, Faust strikes the right balance between power and simplicity.
 
+In larger or production-grade architectures, the same type of streaming logic would typically be implemented 
+with distributed engines such as Kafka Streams which provide horizontal scalability,
+fault tolerance across multiple nodes and deeper integration with modern lakehouse ecosystems.
+
 ### **Pydantic**
 Pydantic ensures the pipeline only processes well‑formed events.  
 It prevents malformed data from breaking the consumer and keeps the system robust.  
