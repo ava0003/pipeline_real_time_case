@@ -9,13 +9,10 @@ from constants import (
     WINDOW_SIZE_SECONDS,
     WINDOW_STEP_SECONDS,
     WINDOW_EXPIRES_SECONDS,
-    ROLLING_WINDOW_RESULTS_PARQUET,
-    SESSION_DURATION_PARQUET,
 )
 from models.event import Event
 from consumer.processors.rolling_window import process_rolling_window
 from consumer.processors.session_duration import process_session
-from consumer.storage import save_parquet
 
 # LOGGING
 
@@ -24,8 +21,6 @@ logging.basicConfig(
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
 )
 logger = logging.getLogger("faust_consumer")
-
-
 
 # Faust
 # App

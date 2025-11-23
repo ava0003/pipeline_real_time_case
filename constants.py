@@ -1,5 +1,5 @@
 
-# Producer send
+# Producer
 PRODUCER_SEND_INTERVAL = 1
 
 # Tenant list
