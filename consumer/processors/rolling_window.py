@@ -3,9 +3,11 @@ from constants import ROLLING_WINDOW_RESULTS_PARQUET
 
 def process_rolling_window(event, event_counts, window_size):
 
-    event_counts[event.tenant_id, event.event_type] += 1
+    key = f"{event.tenant_id}:{event.event_type}"
 
-    current_count = int(event_counts[event.tenant_id, event.event_type].now())
+    event_counts[key] += 1
+
+    current_count = int(event_counts[key].now())
 
     snapshot = {
         "tenant": event.tenant_id,
