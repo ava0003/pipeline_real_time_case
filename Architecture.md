@@ -1,7 +1,7 @@
 
 # Architecture & Failure Scenarios
 
-## Architecture Schema
+## 1. Architecture Schema
 
 This project follows a simple real-time architecture:  
 events are generated, validated, processed, aggregated, and finally stored in an analytical format.
@@ -75,7 +75,7 @@ It removes installation friction and guarantees everyone runs the pipeline the s
                 └────────────────────────────────┘
 ---
 
-## Justification of Technology Choices
+## 2. Justification of Technology Choices
 
 ### **Kafka (KRaft)**
 Kafka provides a stable backbone for the event stream.  
@@ -104,10 +104,36 @@ It avoids configuration errors, makes setup trivial, and ensures the same behavi
 
 ---
 
+## 3. Limitations
+### Single-broker Kafka
 
-# Failure Scenarios & Mitigation
+For simplicity, the architecture uses a single Kafka broker.
+This is not fault-tolerant and would not support production availability requirements.
+A real deployment would require a multi-broker cluster with replication.
 
-## Invalid events in the system**
+### In-memory Faust tables
+
+Faust tables are stored in memory, meaning:
+- No persistence across restarts
+
+- Limited scalability
+
+
+### Simplified session logic
+
+Sessions are inferred only from session_start and session_end events.
+A real system may require timeout-based session detection and cross-event correlation.
+
+### Parquet append for each event
+
+Writing to Parquet on every event is acceptable for a use case, but inefficient at scale.
+A production pipeline would batch writes or stream into a warehouse (e.g., BigQuery, Snowflake).
+
+
+
+# 4. Failure Scenarios & Mitigation
+
+### Invalid events in the system**
 
 In a real system, some events will  be incomplete, incorrectly formatted, or missing important fields such as the tenant ID or the timestamp.
 If these events were processed directly, they could break the consumer logic or corrupt the analytical results (for example by creating bad session durations or invalid window counts).
@@ -121,7 +147,7 @@ This keeps the system healthy: valid events continue to be processed normally, w
 
 
 
-## Kafka becomes temporarily unavailable
+### Kafka becomes temporarily unavailable
 
 In a real environment, the Kafka broker may restart or become unreachable for a few seconds.
 When this happens, the consumer cannot read new events and the producer cannot deliver them.
