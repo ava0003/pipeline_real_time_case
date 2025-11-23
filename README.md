@@ -33,30 +33,47 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-## 2. Local Architecture Overview
+## 2. How to launch it
+### Single-command execution (macOS & Windows)
 
-The system is composed of:
+To make the project easy to run locally, the entire stackcan be launched with one command, depending on your operating system.
 
-### Producer
-Generates live events (valid + invalid) for multiple tenants.
+This allows you to start the full real-time pipeline without opening multiple terminals manually.
 
-### Kafka (KRaft mode)
-Message broker handling ingestion and replay.
+### ***a. macOS***
+- Use the provided shell script:
+```
+./run_all.sh
+```
 
-### Faust Consumer
-- Consume events in streaming.
-- Validate schema
-- Send invalid events to DLQ
-- Update rolling windows
-- Compute session statistics
-- Store analytics in Parquet
+***Make sure it's executable:***
+```
+chmod +x run_all.sh
+```
+### ***b. Windows***
 
-### Parquet Storage
-Two analytical outputs:
-- Rolling window event counts
-- Session durations and aggregated metrics
+Use the batch script:
+```
+run_windows.bat
+```
+In both cases, the script will automatically:
 
-## 3. Starting Kafka
+- Start Kafka through Docker Compose
+
+- Open a new terminal running the Faust consumer
+
+- Open another terminal running the event producer
+
+- Activate the virtual environment for each process
+
+**Notes**
+
+- Kafka must not already be running (otherwise stop previous containers with docker compose down)
+- Both scripts assume your virtual environment is named venv at the root of the project 
+
+### Step by step execution 
+
+### I. Starting Kafka
 
 ```bash
 docker compose up -d
@@ -69,25 +86,43 @@ docker ps
 ```
 You should find something like this: 
 
-![img_1.png](img_1.png)
+![img.png](img.png)
 
-## 4. Launch the Consumer
+### II. Launch the Consumer
 
 ```bash
 source venv/bin/activate
 python -m consumer.consumer_faust worker -l info
 ```
 
-## 5. Launch the Producer
+### III. Launch the Producer
 
 ```bash
 source venv/bin/activate
 python -m producer.producer
 ```
 
-## 6. Outputs (Parquet Files)
+### IV. Find outputs
 
 Stored under `/storage/`
+
+### V. Reading the Outputs
+
+```python
+import pandas as pd
+df = pd.read_parquet("storage/rolling_window_results.parquet")
+print(df.head())
+```
+
+### VI. Cleaning Kafka
+
+```bash
+docker compose down -v
+```
+
+---
+
+## 3. Stream processing explanation
 
 ### 1. Rolling Window
 `storage/rolling_window_results.parquet`
@@ -142,25 +177,28 @@ avg_duration = total_duration / count
   - avg_session_duration
   - session_count
 
-## 7. Reading the Outputs
+-----
 
-```python
-import pandas as pd
-df = pd.read_parquet("storage/rolling_window_results.parquet")
-print(df.head())
-```
 
-## 8. Cleaning Kafka
+## 4. Local Architecture Overview
 
-```bash
-docker compose down -v
-```
+The system is composed of:
 
-## 9. Technologies Used
+### Producer
+Generates live events (valid + invalid) for multiple tenants.
 
-- Python 3.11
-- Kafka (Confluent, KRaft mode)
-- Faust-Streaming
-- Pydantic
-- Parquet + PyArrow
-- Docker
+### Kafka (KRaft mode)
+Message broker handling ingestion and replay.
+
+### Faust Consumer
+- Consume events in streaming.
+- Validate schema
+- Send invalid events to DLQ
+- Update rolling windows
+- Compute session statistics
+- Store analytics in Parquet
+
+### Parquet Storage
+Two analytical outputs:
+- Rolling window event counts
+- Session durations and aggregated metrics
