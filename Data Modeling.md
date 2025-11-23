@@ -44,16 +44,24 @@ Stored in memory or fast local storage (ex: Faust tables or DuckDB live)
 Historical dashboards require long retention and aggregated metrics.
 
 ### **Table: fact_events_daily**
+| Column        | Type    | Description                         |
+|---------------|---------|-------------------------------------|
+| date          | DATE    | Partition key                       |
+| tenant_id     | STRING  |                                     |
+| event_type    | STRING  |                                     |
+| total_events  | INTEGER | Number of events that day           |
+| error_events  | INTEGER | Number of error events              |
 
-| Column               | Type    | Description                          |
-|----------------------|---------|--------------------------------------|
-| date                 | DATE    | Partition key                        |
-| tenant_id            | STRING  | Client identifier                     |
-| event_type           | STRING  |                                      |
-| total_events         | INTEGER | Events count for that day             |
-| error_events         | INTEGER | Error count                           |
-| avg_session_duration | FLOAT   | Average session duration              |
-| unique_sessions      | INTEGER |                               |
+### **Table: fact_session_daily**
+
+| Column                | Type    | Description                               |
+|-----------------------|---------|-------------------------------------------|
+| date                  | DATE    | Partition key                             |
+| tenant_id             | STRING  |                                           |
+| total_sessions_unique | INTEGER | Number of completed sessions              |
+| avg_session_duration  | FLOAT   | Average duration of sessions for that day |
+| max_session_duration  | FLOAT   | Longest session                           |
+| min_session_duration  | FLOAT   | Shortest session                          |
 
 For this use case, the historical storage layer would be implemented using local Parquet files.
 This keeps the entire solution fully runnable on a personal machine without external services. 
@@ -68,25 +76,52 @@ Technologies such as Snowflake, BigQuery or Databricks provide ACID transactions
 
 ### Example Historical Indicators
 **Daily Events per Tenant**
+
+It highlights usage volume, peak activity periods, and long-term growth trends.
+It allows to identify days with unusual spikes or drops in traffic.
 ```sql
 SELECT 
     date,
     tenant_id,
-    SUM(total_events) AS events
+    SUM(total_events) AS daily_events
 FROM fact_events_daily
-GROUP BY 1,2
-ORDER BY date;
+GROUP BY date, tenant_id
+ORDER BY date, tenant_id;
 ```
 
 ---
 
 **Weekly Error Rate**
+
+The weekly error rate measures the proportion of failing events over an entire week.
+It is especially useful for detecting recurring problems and comparing reliability across tenants.
+
 ```sql
 SELECT
     DATE_TRUNC('week', date) AS week,
-    tenant_id,
-    SUM(error_events) / SUM(total_events) AS error_rate
+    SUM(error_events) * 1.0 / NULLIF(SUM(total_events), 0) AS weekly_error_rate
 FROM fact_events_daily
-GROUP BY 1,2;
+GROUP BY week
+ORDER BY week;
+```
+---
+
+**Average Number of Events per Session per Tenant per Day**
+
+This metric combines event volume with session volume to measure how much activity happens inside each session.
+It reflects user engagement and the volume of interactions.
+It helps distinguish between tenants with many light sessions versus fewer but highly engaged sessions.
+```sql
+SELECT
+    e.date,
+    e.tenant_id,
+    SUM(e.total_events) * 1.0 / NULLIF(SUM(s.total_sessions), 0) 
+        AS avg_events_per_session
+FROM fact_events_daily e
+JOIN fact_session_daily s
+    ON e.date = s.date
+   AND e.tenant_id = s.tenant_id
+GROUP BY e.date, e.tenant_id
+ORDER BY e.date, e.tenant_id;
 ```
 ---
